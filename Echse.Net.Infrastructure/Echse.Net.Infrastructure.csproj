@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Echse.Net.Domain\Echse.Net.Domain.csproj" />
+      <ProjectReference Include="..\Echse.Net.Extensions\Echse.Net.Extensions.csproj" />
+      <ProjectReference Include="..\Echse.Net.Serialization\Echse.Net.Serialization.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Lidgren.Network.Core2" Version="1.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Echse.Net.Domain\Echse.Net.Domain.csproj" />
+      <ProjectReference Include="..\Echse.Net.Extensions\Echse.Net.Extensions.csproj" />
+      <ProjectReference Include="..\Echse.Net.Serialization\Echse.Net.Serialization.csproj" />
+    </ItemGroup>
+
+</Project>

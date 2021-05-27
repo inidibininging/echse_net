@@ -1,0 +1,3 @@
+[submodule "echse"]
+	path = echse
+	url = https://github.com/inidibininging/echse.git
