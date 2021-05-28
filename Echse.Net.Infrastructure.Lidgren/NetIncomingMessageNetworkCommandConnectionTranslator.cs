@@ -31,7 +31,7 @@ namespace Echse.Net.Infrastructure.Lidgren
             var networkCommand = IncomingMessageTranslator.Translate(messageAsBytes);
             var networkCommandConnection = new NetworkCommandConnection<long>
             {
-                Id = input.SenderConnection.RemoteUniqueIdentifier,
+                Id = input.SenderConnection?.RemoteUniqueIdentifier ?? 0,
                 CommandArgument = networkCommand.CommandArgument,
                 CommandName = networkCommand.CommandName,
                 Data = networkCommand.Data

@@ -9,7 +9,7 @@ using Lidgren.Network;
 namespace Echse.Net.Infrastructure.Lidgren
 {
     public class NetOutgoingMessageBusService<TNetPeer> :
-        IMessageOutputService<NetworkCommandConnection<long>, long> 
+        IMessageOutputService<NetworkCommand, long> 
         where TNetPeer : NetPeer
     {
         private TNetPeer Peer { get; set; }
@@ -52,7 +52,7 @@ namespace Echse.Net.Infrastructure.Lidgren
             return Peer.Connections.Count == 0 ? Array.Empty<(long remoteConnectionId, NetSendResult)>().ToList() : Peer.Connections.ConvertAll(connection => (connection.RemoteUniqueIdentifier, SendToClient<T>(commandName, instanceToSend, netDeliveryMethod, sequenceChannel, connection)));
         }
         
-        public MessageSendResult SendTo(NetworkCommandConnection<long> message, long recipient, MessageDeliveryMethod netDeliveryMethod)
+        public MessageSendResult SendTo(NetworkCommand message, long recipient, MessageDeliveryMethod netDeliveryMethod)
         {
             var result = Peer.Connections?.FirstOrDefault(p => p.RemoteUniqueIdentifier == recipient)?.SendMessage(
                 CreateMessage(message),

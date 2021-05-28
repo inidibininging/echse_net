@@ -8,7 +8,7 @@ using Lidgren.Network;
 namespace Echse.Net.Infrastructure.Lidgren
 {
     public class NetIncomingMessageBusService<TNetPeer> :
-        INetIncomingMessageBusService,
+        // INetIncomingMessageBusService,
         IMessageInputService<NetworkCommandConnection<long>> where TNetPeer : NetPeer
     {
         private NetIncomingMessageNetworkCommandConnectionTranslator NetIncomingMessageNetworkCommandConnectionTranslator
@@ -23,21 +23,25 @@ namespace Echse.Net.Infrastructure.Lidgren
             NetIncomingMessageNetworkCommandConnectionTranslator = netIncomingMessageNetworkCommandConnectionTranslator ?? throw new ArgumentNullException(nameof(netIncomingMessageNetworkCommandConnectionTranslator));
         }
 
-        IEnumerable<NetworkCommandConnection<long>> IMessageInputService<NetworkCommandConnection<long>>.FetchMessageChunk()
-            => FetchMessageChunk().Select(msg => NetIncomingMessageNetworkCommandConnectionTranslator.Translate(msg));
+        public IEnumerable<NetworkCommandConnection<long>> FetchMessageChunk()
+        {
+            var messages = InternalFetchMessageChunk();
+            return messages 
+                .Where(msg => msg.MessageType == NetIncomingMessageType.Data)
+                .Select(msg => NetIncomingMessageNetworkCommandConnectionTranslator.Translate(msg));
+        }
 
 
-        Task<List<NetworkCommandConnection<long>>> IMessageInputService<NetworkCommandConnection<long>>.
-            FetchMessageChunkAsync()
-            => FetchMessageChunkAsync().ContinueWith(task =>
-                task.Result.Select(msg => NetIncomingMessageNetworkCommandConnectionTranslator.Translate(msg)).ToList());
-            
+        public Task<List<NetworkCommandConnection<long>>>  FetchMessageChunkAsync()
+            => InternalFetchMessageChunkAsync().ContinueWith(task =>
+                task.Result
+                    .Where(msg => msg.MessageType == NetIncomingMessageType.Data)
+                    .Select(msg => NetIncomingMessageNetworkCommandConnectionTranslator.Translate(msg)).ToList());
+
+        private Task<List<NetIncomingMessage>> InternalFetchMessageChunkAsync() => new(InternalFetchMessageChunk);
         
 
-        public Task<List<NetIncomingMessage>> FetchMessageChunkAsync() => new(FetchMessageChunk);
-        
-
-        public List<NetIncomingMessage> FetchMessageChunk()
+        private List<NetIncomingMessage> InternalFetchMessageChunk()
         {
             var fetchedMessages = new List<NetIncomingMessage>();
             var fetchMessageResult = Peer.ReadMessages(fetchedMessages);
