@@ -8,6 +8,7 @@ using Echse.Language;
 using Echse.Net.Domain;
 using Echse.Net.Infrastructure;
 using Echse.Net.Infrastructure.Lidgren;
+using Echse.Net.Lidgren.Instructions;
 using Echse.Net.Serialization.MsgPack;
 using Echse.Net.Serialization.Yaml;
 using Lidgren.Network;
@@ -26,8 +27,6 @@ namespace Echse.Net.Lidgren
             var byteToNetworkCommand = new MsgPackByteArraySerializerAdapter();
             var toAnythingConverter = new NetworkCommandDataConverterService(byteToNetworkCommand);
             
-            
-
             //server
             var serverInput = server.ToInputBus(byteToNetworkCommand);
             var serverOutput = server.ToOutputBus(byteToNetworkCommand);
@@ -42,6 +41,7 @@ namespace Echse.Net.Lidgren
             var api = new InMemoryDataBankApi();
             var languageContext = new InMemoryDataBankMachine(api);
             languageContext.SharedContext = new InMemoryDataBank("Main");
+            languageContext.NewService.New(nameof(CanInit), new CanInit());
             var echseInterpreter = new Interpreter("Main");
 
             

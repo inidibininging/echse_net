@@ -26,6 +26,8 @@ namespace Echse.Net.Infrastructure.Lidgren
         public IEnumerable<NetworkCommandConnection<long>> FetchMessageChunk()
         {
             var messages = InternalFetchMessageChunk();
+            if (!messages.Any())
+                return Array.Empty<NetworkCommandConnection<long>>();
             return messages 
                 .Where(msg => msg.MessageType == NetIncomingMessageType.Data)
                 .Select(msg => NetIncomingMessageNetworkCommandConnectionTranslator.Translate(msg));
