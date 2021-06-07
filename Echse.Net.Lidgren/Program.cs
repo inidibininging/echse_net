@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.SymbolStore;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Echse.Domain;
 using Echse.Language;
 using Echse.Net.Domain;
@@ -12,6 +14,7 @@ using Echse.Net.Lidgren.Instructions;
 using Echse.Net.Serialization.MsgPack;
 using Echse.Net.Serialization.Yaml;
 using Lidgren.Network;
+using States.Core.Common;
 
 namespace Echse.Net.Lidgren
 {
@@ -37,43 +40,59 @@ namespace Echse.Net.Lidgren
                 {Topics.Out,  new NetworkCommandMessageQueue((connection => connection.CommandName == (byte) Topics.Out)) },
             };
             
-            //langauge stuff
+            /* language stuff
+                - add own instructions                
+             */
             var api = new InMemoryDataBankApi();
-            var languageContext = new InMemoryDataBankMachine(api);
-            languageContext.SharedContext = new InMemoryDataBank("Main");
+            var languageContext = new InMemoryDataBankMachine(api)
+            {
+                SharedContext = new InMemoryDataBank("Main")
+            };
             languageContext.NewService.New(nameof(CanInit), new CanInit());
+            languageContext.NewService.New(nameof(NewId), new NewId());
             var echseInterpreter = new Interpreter("Main");
 
+            var interns =
+                new Dictionary<string, Dictionary<string, string>>();
+            var newObject = new Action<string, string>((subject, argument) =>
+            {
+                interns[argument] = new Dictionary<string, string>();
+                // echseInterpreter.AddCreateInstruction<string>(symbol => symbol == LexiconSymbol.Create,
+                //     (newCreation => newCreation == subject),
+                //     
+                //     createFunctionWithArgumentsToCall: ((s, s1) =>
+                //     {
+                //         
+                //         // echseInterpreter.Context.NewService.New(subject,new CommandStateActionDelegate<string, IEchseContext>((
+                //         //         machine =>
+                //         //         {
+                //         //             
+                //         //         })
+                //         // ));
+                //     }));
+            });
+            
             
             echseInterpreter.AddCreateInstruction<string>(symbol => symbol == LexiconSymbol.Create,
-                (creation) => true,
+                (creation) => creation == "NewObject" || creation.StartsWith("Assign"),
                 (subject, argument) =>
                 {
-                    Console.WriteLine($"created {subject} {argument}");
+                    if(subject == "NewObject")
+                        newObject(subject, argument);
+                    if(subject.StartsWith("Assign"))
+                        interns[string.Join(null,subject.Skip("Assign".Length)) ?? string.Empty][argument] = "";
                 });
             
-            var someRandomStrings = new List<string>() { "random string", "random string 2" };
-            
-            // echseInterpreter.AddModifyInstruction<string>(symbol => symbol == LexiconSymbol.Modify,
-            //     (tag) =>
+            // echseInterpreter.AddCreateInstruction<string>(symbol => symbol == LexiconSymbol.Create,
+            //     (creation) => creation.StartsWith("Assign"),
+            //     (subject, argument) =>
             //     {
-            //         Console.WriteLine($"getting entities by tag {tag}");
-            //         return someRandomStrings;
-            //     },
-            //     expression =>
-            //     {
-            //         Console.WriteLine($"Checking entities {expression.Name} ...");
-            //         return expression.Name == "herbert" ? someRandomStrings : someRandomStrings;
-            //     },
-            //     (entity, mod) =>
-            //     {
-            //         Console.WriteLine($"entity {entity} will be modded with {mod.Identifier?.Name} {mod.Property?.Name} {mod.Attribute?.Name} {mod.SignConverter?.Name} {mod.Number?.Name} {mod.Number?.NumberValue}");
+            //         Console.WriteLine($"set to object {subject} {argument}");
+            //         
             //     });
             
-            
             echseInterpreter.Context = languageContext;
-            
-            
+
             //subscribers
             var consumeInboxAsCode = new LanguageInboxConsumer(toAnythingConverter, echseInterpreter);
             var tagVariableSync = new TagSyncConsumer(toAnythingConverter, languageContext);
@@ -84,17 +103,19 @@ namespace Echse.Net.Lidgren
             internalQueues[Topics.Inbox].Subscribe(tagVariableSync);
             internalQueues[Topics.Out].Subscribe(producerOut);
             
-            //message handling
+            
+            //message handling ( the network IO must be in the main thread ) 
             while (true)
             {
-                //load stuff from queues and pass on to handlers
-                foreach (var networkCommandConnection in serverInput.FetchMessageChunk())
+                var messages = serverInput.FetchMessageChunk().ToList();
+                foreach (var q in internalQueues)
                 {
-                    Console.WriteLine($"server received message");
-                    foreach (var q in internalQueues)
-                        q.Value.OnNext(networkCommandConnection);
+                    Task.Factory.StartNew(() =>
+                    {
+                        messages.ForEach(msg => q.Value.OnNext(msg));
+                    });
                 }
-                
+
                 //load stuff from output queue and send to clients
                 foreach (var networkCommandConnection in producerOut.FetchMessageChunk())
                 {
@@ -102,13 +123,6 @@ namespace Echse.Net.Lidgren
                         MessageDeliveryMethod.Reliable);
                     Console.WriteLine($"server sent message to {networkCommandConnection.Id}");
                 }
-                
-                // foreach (var networkCommandConnection in clientInput.FetchMessageChunk())
-                // {
-                //     clientOutput.SendTo("ok".ToNetworkCommand(1, byteToNetworkCommand),
-                //         networkCommandConnection.Id, MessageDeliveryMethod.Reliable);
-                //     Console.WriteLine($"client received {toAnythingConverter.ConvertToObject(networkCommandConnection)}");
-                // }
             }
             
         }

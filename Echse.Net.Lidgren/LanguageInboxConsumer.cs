@@ -5,7 +5,8 @@ using Echse.Net.Infrastructure;
 
 namespace Echse.Net.Lidgren
 {
-    public class LanguageInboxConsumer : IObserver<NetworkCommandConnection<long>>, IDisposable
+    public class LanguageInboxConsumer : 
+        IObserver<NetworkCommandConnection<long>>, IDisposable
     {
         private NetworkCommandDataConverterService _dataConverterService;
         private readonly Interpreter _echseInterpreter;

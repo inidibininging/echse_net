@@ -16,7 +16,7 @@ namespace Echse.Net.Lidgren.CLI
         static void Main(string[] args)
         {
             WriteExampleClientConfig();
-            var script = File.ReadAllText("script.echse");
+            var script = File.ReadAllText("mod.echse");
             DisplayWelcomeMessage();
             
             var clientConfig = ExampleClientConfig().Subscriptions.FirstOrDefault();
@@ -37,8 +37,7 @@ namespace Echse.Net.Lidgren.CLI
                 clientConnection.client.RemoteUniqueIdentifier, MessageDeliveryMethod.Reliable);
             while (true)
             {
-                
-                
+
                 //first read
                 foreach (var networkCommandConnection in clientInput.FetchMessageChunk())
                 {
