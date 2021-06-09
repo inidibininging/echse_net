@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Echse.Domain;
 using States.Core.Infrastructure.Services;
 
-namespace Echse.Net.Lidgren
+namespace Echse.Console
 {
     public class InMemoryDataBankApi :
         IStateGetService<string, IEchseContext>,
