@@ -1,0 +1,12 @@
+
+:ClientNode ( args )
+    Set Tag ClientId = 'ClientId'
+    Set Tag ClientExplanation = 'ClientExplanation'
+    @Connect '127.0.01' '8081' 'echse_node' ClientId ClientExplanation@
+    @PipeMessageTo 'NewMessage' ClientId@
+
+:NewMessage ( networkMessageId , connectionId )
+    Set Tag messageContent = 'messageContent'
+    @GetMessage networkMessageId messageContent@
+    @Print 'CLIENT: ' messageContent@
+    @SendMessage 'HELLO' connectionId@

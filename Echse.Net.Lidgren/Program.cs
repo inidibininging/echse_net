@@ -50,10 +50,10 @@ namespace Echse.Net.Lidgren
             var interns =
                 new Dictionary<string, LinkedList<string>>();
             var newObject = new Action<string, IEnumerable<string>>((subject, arguments) =>
-           {
-               foreach (var argument in arguments)
-                   interns[argument] = new LinkedList<string>();
-           });
+            {
+                foreach (var argument in arguments)
+                    interns[argument] = new LinkedList<string>();
+            });
 
 
             echseInterpreter.AddCreateInstruction<string>(symbol => symbol == LexiconSymbol.Create,

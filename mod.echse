@@ -1,19 +1,18 @@
 
-
 :NewMessage ( networkMessageId , connectionId )
-   Set Tag guard = 'NewMessageGuard'
-   Set Tag guardMessage = 'guardMessage'
-   Set Tag guardExplanation = 'guardExplanation'
-   Set Tag messageContent = 'messageContent'
+    Set Tag guard = 'NewMessageGuard'
+    Set Tag guardMessage = 'guardMessage'
+    Set Tag guardExplanation = 'guardExplanation'
+    Set Tag messageContent = 'messageContent'
 
-   @Print 'HELLO THIS IS A' ' CONCATENATED STRING! :)'@
-   @UseGuard guard networkMessageId connectionId guardMessage guardExplanation@
-   @GetMessage networkMessageId messageContent@
-   
-   If guardMessage Is 'Ok'
-      @Print 'Guard message is ok'@
-      !Echo( connectionId )
-   EndIf
+    @Print 'HELLO THIS IS A' ' CONCATENATED STRING! :)'@
+    @UseGuard guard networkMessageId connectionId guardMessage guardExplanation@
+    @GetMessage networkMessageId messageContent@
+
+    If guardMessage Is 'Ok'
+        @Print 'Guard message is ok'@
+        !Echo( connectionId )
+    EndIf
 
    If guardMessage Is 'Error'
       !PrintError( networkMessageId , connectionId ,  guardMessage , guardExplanation )

@@ -1,0 +1,12 @@
+
+:ServerNode ( args )
+    Set Tag ServerResultOrId = 'ServerResultOrId'
+    Set Tag ServerExplanation = 'ServerExplanation'
+    @Serve '127.0.0.1' '8081' 'echse_node' ServerResultOrId, ServerExplanation@
+    @PipeMessageTo 'NewMessage' ServerResultOrId@
+
+:NewMessage ( networkMessageId , connectionId )
+    Set Tag messageContent = 'messageContent'
+    @GetMessage networkMessageId messageContent@
+    @Print 'SERVER: ' messageContent@
+    @SendMessage messageContent connectionId@
