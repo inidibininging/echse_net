@@ -3,7 +3,8 @@
     Set Tag ClientId = 'ClientId'
     Set Tag ClientExplanation = 'ClientExplanation'
     @Connect '127.0.01' '8081' 'echse_node' ClientId ClientExplanation@
-    @PipeMessageTo 'NewMessage' ClientId@
+    @PipeMessageTo 'NewMessage' 'ClientId'@
+    @SendMessage 'This is a test lol' ClientId@
 
 :NewMessage ( networkMessageId , connectionId )
     Set Tag messageContent = 'messageContent'
