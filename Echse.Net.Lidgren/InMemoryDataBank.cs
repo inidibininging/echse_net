@@ -34,10 +34,21 @@ namespace Echse.Net.Lidgren
             }
         }
 
-        public void RemoveTag(string tagName)
+        public void RemoveTagByName(string tagName)
         {
-            throw new NotImplementedException();
+            var variablesFound = _variables.Where(v => v.Name == tagName &&
+                                                        v.DataTypeSymbol == LexiconSymbol.TagDataType);
+            if(variablesFound.Any())
+                _variables = _variables.Except(variablesFound).ToList();
         }
         
+        public void RemoveTagByNameAndScope(string tagName, string scope)
+        {
+            var variablesFound = _variables.Where(v => v.Scope == scope && 
+                                                                 v.Name == tagName &&
+                                                                 v.DataTypeSymbol == LexiconSymbol.TagDataType);
+            if(variablesFound.Any())
+                _variables = _variables.Except(variablesFound).ToList();
+        }
     }
 }

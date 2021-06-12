@@ -6,6 +6,7 @@ using System.Text;
 using Echse.Domain;
 using Echse.Language;
 using Echse.Net.Domain;
+using Echse.Net.Infrastructure;
 using Echse.Net.Infrastructure.Lidgren;
 using Echse.Net.Serialization.MsgPack;
 using Lidgren.Network;
@@ -114,7 +115,7 @@ namespace Echse.Console
                             string clientId = Guid.NewGuid().ToString();
                             var client = nodeConfiguration.CreateClient();
                             var connection = nodeConfiguration.ConnectToServer(client);
-                            
+
                             clients.Add(clientId, client);
                             return (clientId, "The connection started successfully");
                         }
@@ -136,14 +137,17 @@ namespace Echse.Console
             });
 
             var Print = new Action<IEnumerable<string>>((strings) => System.Console.WriteLine(string.Join(' ',strings)));
-            
+
             var SendMessage = new Action<(string messageToSend, string connectionId)>((messageToSend) => {
                 foreach(var server in servers)
                     server
                         .Value
                         .Connections
                         .Where(c => c.RemoteUniqueIdentifier.ToString() == messageToSend.connectionId)
-                        .Select(c => c.SendMessage(messageToSend.ToClientOutgoingMessage(c, byteToNetworkCommand), NetDeliveryMethod.ReliableOrdered, 0))
+                        .Select(c => 
+                            c.Peer.ToOutputBus(byteToNetworkCommand).SendTo(
+                            messageToSend.ToNetworkCommand(0, byteToNetworkCommand),
+                            0, MessageDeliveryMethod.Reliable))
                         .ToList();
             });
 

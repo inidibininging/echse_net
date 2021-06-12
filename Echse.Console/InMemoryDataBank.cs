@@ -34,7 +34,12 @@ namespace Echse.Console
             }
         }
 
-        public void RemoveTag(string tagName)
+        public void RemoveTagByName(string tagName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RemoveTagByNameAndScope(string tagName, string scope)
         {
             throw new NotImplementedException();
         }
