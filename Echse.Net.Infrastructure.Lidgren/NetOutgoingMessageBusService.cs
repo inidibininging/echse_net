@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using Echse.Net.Domain;
 using Echse.Net.Domain.Lidgren;
 using Echse.Net.Serialization;
@@ -52,15 +53,28 @@ namespace Echse.Net.Infrastructure.Lidgren
             return Peer.Connections.Count == 0 ? Array.Empty<(long remoteConnectionId, NetSendResult)>().ToList() : Peer.Connections.ConvertAll(connection => (connection.RemoteUniqueIdentifier, SendToClient<T>(commandName, instanceToSend, netDeliveryMethod, sequenceChannel, connection)));
         }
         
-        public MessageSendResult SendTo(NetworkCommand message, long recipient, MessageDeliveryMethod netDeliveryMethod)
+        public MessageSendResult SendTo(NetworkCommand message, long remoteUniqueIdentifier, MessageDeliveryMethod netDeliveryMethod)
         {
-            var result = Peer.Connections?.FirstOrDefault(p => p.RemoteUniqueIdentifier == recipient)?.SendMessage(
+            var result = Peer.Connections?.FirstOrDefault(p => p.RemoteUniqueIdentifier == remoteUniqueIdentifier)?.SendMessage(
                 CreateMessage(message),
                 ConvertMessageDeliveryMethodToLidgrenDeliveryMethod(netDeliveryMethod),
                 0);
             
             return ConvertMessageDeliveryMethodToLidgrenDeliveryMethod(result);
         }
+        
+        public List<(long remoteUniqueIdentifier, MessageSendResult result)> Broadcast(NetworkCommand message, MessageDeliveryMethod netDeliveryMethod)
+        {
+            if (Peer.Connections?.Any() == true)
+            {
+                return Peer.Connections.Select(p =>
+                    (p.RemoteUniqueIdentifier, ConvertMessageDeliveryMethodToLidgrenDeliveryMethod(p.SendMessage(CreateMessage(message),
+                        ConvertMessageDeliveryMethodToLidgrenDeliveryMethod(netDeliveryMethod),
+                        0)))).ToList();
+            }
+            return new List<(long remoteUniqueIdentifier, MessageSendResult result)>();
+        }
+        
         
         private static MessageSendResult ConvertMessageDeliveryMethodToLidgrenDeliveryMethod(NetSendResult? netSendResult)
             =>  netSendResult switch
