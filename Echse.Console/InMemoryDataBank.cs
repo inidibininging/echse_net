@@ -36,12 +36,21 @@ namespace Echse.Console
 
         public void RemoveTagByName(string tagName)
         {
-            throw new NotImplementedException();
+            var foundVars = _variables.Where(t => 
+                                                 t.DataTypeSymbol == LexiconSymbol.TagDataType &&
+                                                 t.Name == tagName);
+            if (foundVars.Any())
+                _variables = _variables.Except(foundVars).ToList();
         }
 
         public void RemoveTagByNameAndScope(string tagName, string scope)
         {
-            throw new NotImplementedException();
+            var foundVars = _variables.Where(t => 
+                t.DataTypeSymbol == LexiconSymbol.TagDataType &&
+                t.Name == tagName &&
+                t.Scope == scope);
+            if (foundVars.Any())
+                _variables = _variables.Except(foundVars).ToList();
         }
         
     }

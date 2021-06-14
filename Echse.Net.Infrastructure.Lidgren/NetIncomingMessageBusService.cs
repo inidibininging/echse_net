@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Echse.Net.Domain;
 using Lidgren.Network;
@@ -47,6 +48,12 @@ namespace Echse.Net.Infrastructure.Lidgren
         {
             var fetchedMessages = new List<NetIncomingMessage>();
             var fetchMessageResult = Peer.ReadMessages(fetchedMessages);
+            fetchedMessages.ForEach(msg =>
+            {
+                Console.WriteLine(ASCIIEncoding.ASCII.GetString(msg.Data));
+                Console.WriteLine(msg.MessageType == NetIncomingMessageType.Data);
+            });
+            
             return fetchedMessages;
         }
         

@@ -15,6 +15,11 @@ namespace Echse.Console
 {
     internal static class Program
     {
+        private static Dictionary<string, NetClient> _clients;
+        private static Dictionary<string, NetServer> _servers;
+        private static List<(string messagefunction, string connectionId)> _hooks;
+        private static MsgPackByteArraySerializerAdapter _byteToNetworkCommand;
+
         private static void Main(string[] args)
         {
             DisplayWelcomeMessage();
@@ -58,10 +63,10 @@ namespace Echse.Console
             });
 
             //used for saving connections
-            var clients = new Dictionary<string, NetClient>();
-            var servers = new Dictionary<string, NetServer>();
-            var hooks = new List<(string messagefunction, string connectionId)>();
-            var byteToNetworkCommand = new MsgPackByteArraySerializerAdapter();
+            _clients = new Dictionary<string, NetClient>();
+            _servers = new Dictionary<string, NetServer>();
+            _hooks = new List<(string messagefunction, string connectionId)>();
+            _byteToNetworkCommand = new MsgPackByteArraySerializerAdapter();
 
             var naMessage           =    ("NA" , "NA");
             // var serverErrorMessage  =    ("Error", "Cannot start server");
@@ -86,7 +91,7 @@ namespace Echse.Console
                         };
                         string serverId = Guid.NewGuid().ToString();
                         var server = nodeConfiguration.CreateAndStartServer();
-                        servers.Add(serverId, server);
+                        _servers.Add(serverId, server);
 
                         return (serverId, "The server started successfully");
                     }
@@ -116,8 +121,13 @@ namespace Echse.Console
                             var client = nodeConfiguration.CreateClient();
                             string clientId = Guid.NewGuid().ToString();
                             var connection = nodeConfiguration.ConnectToServer(client, maxAttemptsToConnect: 32, spinWaitSeconds: 2);
-
-                            clients.Add(clientId, client);
+                            
+                            if(connection.succeded)
+                                System.Console.WriteLine($"Connection to [{nodeConfiguration.Host}:{nodeConfiguration.Port}] {connection.client.Peer.UniqueIdentifier} succeded");
+                            else
+                                System.Console.WriteLine($"Connection to [{nodeConfiguration.Host}:{nodeConfiguration.Port}] failed");
+                            
+                            _clients.Add(clientId, client);
                             return (clientId, "The connection started successfully");
                         }
                         catch(Exception ex)
@@ -138,24 +148,43 @@ namespace Echse.Console
             });
 
             var Print = new Action<IEnumerable<string>>((strings) => System.Console.WriteLine(string.Join(' ',strings)));
+            var ReadLine = new Action<(string scope, string name)>((v) =>
+            {
+                System.Console.WriteLine("READ LINE:");
+                echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(v.name, v.scope);
+                echseInterpreter.Context.SharedContext.AddVariable(new()
+                {
+                    Scope = v.scope,
+                    Name =  v.name,
+                    Value = System.Console.ReadLine(),
+                    DataTypeSymbol = LexiconSymbol.TagDataType
+                });
+            });
+            
 
             var SendMessage = new Action<(string messageToSend, string connectionId)>((messageToSend) => {
-                foreach(var server in servers)
-                    server
-                        .Value
-                        .Connections
-                        .Where(c => c.RemoteUniqueIdentifier.ToString() == messageToSend.connectionId)
-                        .Select(c => 
-                            c.Peer.ToOutputBus(byteToNetworkCommand).SendTo(
-                            messageToSend.ToNetworkCommand(0, byteToNetworkCommand),
-                            0, MessageDeliveryMethod.Reliable))
-                        .ToList();
+                foreach (var server in _servers.Where(s => s.Key == messageToSend.connectionId))
+                {
+                    System.Console.WriteLine("Sending message through server.");
+                    server.Value.ToOutputBus(_byteToNetworkCommand).Broadcast(
+                        messageToSend.messageToSend.ToNetworkCommand(0, _byteToNetworkCommand), MessageDeliveryMethod.Reliable);
+                }
+
+
+                foreach (var client in _clients.Where(c => c.Key == messageToSend.connectionId))
+                {
+                    System.Console.WriteLine("Sending message through client.");
+                    client.Value.ToOutputBus(_byteToNetworkCommand).SendTo(
+                        messageToSend.ToNetworkCommand(0, _byteToNetworkCommand),
+                        0, MessageDeliveryMethod.Reliable);
+                }
+
             });
 
             var GetMessage = new Func<string,string>((messageId) =>
             {
                 System.Console.WriteLine($"GetMessage {messageId}");
-                return "SOME WEIRD MESSAGE";
+                return messageId;
             });
 
             var NewMessageGuard = new Func<(string messageId,
@@ -233,6 +262,10 @@ namespace Echse.Console
                     {
                         Print(arguments);
                     }
+                    if(subject == nameof(ReadLine))
+                    {
+                        ReadLine((scope, arguments.ElementAt(0)));
+                    }
                     if (subject == nameof(SendMessage))
                     {
                         SendMessage((arguments.ElementAt(0), arguments.ElementAt(1)));
@@ -288,18 +321,19 @@ namespace Echse.Console
                                 .Variables
                                 .FirstOrDefault((v) => v.Scope == scope &&
                                                         v.Name == arguments.ElementAt(3));
-
+                        connectionId.Value = connection.result;
                         var explanation = echseInterpreter
                                             .Context
                                             .SharedContext
                                             .Variables
                                             .FirstOrDefault((v) => v.Scope == scope &&
                                                                     v.Name == arguments.ElementAt(4));
+                        explanation.Value = connection.explanation;
                     }
                     if (subject == nameof(PipeMessageTo))
                     {
                         var bind = PipeMessageTo((scope, arguments.ElementAt(0), arguments.ElementAt(1)));
-                        hooks.Add(bind);
+                        _hooks.Add(bind);
                     }
                 });
 
@@ -317,72 +351,81 @@ namespace Echse.Console
             while(true)
             {
                 //listen to all servers and save messages
-                foreach(var server in servers)
+                var serversInput = _servers.Select(server => server.Value.ToInputBus(_byteToNetworkCommand));
+                var serversOutput = _servers.Select(server => server.Value.ToOutputBus(_byteToNetworkCommand));
+                foreach(var server in serversInput)
                 {
-                    server.Value
-                        .ToInputBus(byteToNetworkCommand)
+                    server
                         .FetchMessageChunk()
                         .ToList()
                         .ForEach(msg => {
-                        System.Console.WriteLine("New message");
-                        //data to put inside a variable (networkMessageId)
-                        var networkMessageId = byteToNetworkCommand.DeserializeObject<string>(msg.Data);
-                        var connectionId = msg.Id.ToString();
-
-                        foreach(var variable in hooks) {
-                            
-                            //add start variables (see mod.echse)
-                            echseInterpreter.Context.SharedContext.AddVariable(new(){
-                                DataTypeSymbol = LexiconSymbol.TagDataType,
-                                Name = nameof(networkMessageId),
-                                Value = networkMessageId,
-                                Scope = variable.messagefunction
-                            });
-                            echseInterpreter.Context.SharedContext.AddVariable(new(){
-                                DataTypeSymbol = LexiconSymbol.TagDataType,
-                                Name = nameof(connectionId),
-                                Value = variable.connectionId,
-                                Scope = variable.messagefunction
-                            });
-                        }
-                    });
-                }
-                
-                //liste to all clients 
-                foreach (var client in clients)
-                {
-                    client.Value
-                        .ToInputBus(byteToNetworkCommand)
-                        .FetchMessageChunk()
-                        .ToList()
-                        .ForEach(msg =>
-                        {
-
+                            System.Console.WriteLine("New message!!! - Servers - ");
                             //data to put inside a variable (networkMessageId)
-                            var networkMessageId = byteToNetworkCommand.DeserializeObject<string>(msg.Data);
+                            var networkMessageId = _byteToNetworkCommand.DeserializeObject<string>(msg.Data);
                             var connectionId = msg.Id.ToString();
 
-                            foreach (var variable in hooks)
-                            {
-
+                            foreach(var variable in _hooks) {
+                                echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(nameof(networkMessageId), variable.messagefunction);
                                 //add start variables (see mod.echse)
-                                echseInterpreter.Context.SharedContext.AddVariable(new()
-                                {
+                                echseInterpreter.Context.SharedContext.AddVariable(new(){
                                     DataTypeSymbol = LexiconSymbol.TagDataType,
                                     Name = nameof(networkMessageId),
                                     Value = networkMessageId,
                                     Scope = variable.messagefunction
                                 });
-                                echseInterpreter.Context.SharedContext.AddVariable(new()
-                                {
+                                echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(nameof(connectionId), variable.messagefunction);
+                                echseInterpreter.Context.SharedContext.AddVariable(new(){
                                     DataTypeSymbol = LexiconSymbol.TagDataType,
                                     Name = nameof(connectionId),
                                     Value = variable.connectionId,
                                     Scope = variable.messagefunction
                                 });
+                                echseInterpreter.Context.Run(variable.messagefunction);
+                            }});
+                }
+                // foreach (var co in serversOutput)
+                //     co.Broadcast("beep".ToNetworkCommand(0, _byteToNetworkCommand), MessageDeliveryMethod.Reliable);
+                
+                //liste to all clients 
+                var clientInputs = _clients.Values.Select(c => c.ToInputBus(_byteToNetworkCommand));
+                var clientOutputs = _clients.Values.Select(c => c.ToOutputBus(_byteToNetworkCommand));
+                foreach (var client in clientInputs)
+                {
+                    client
+                        .FetchMessageChunk()
+                        .ToList()
+                        .ForEach(msg =>
+                        {
+                            System.Console.WriteLine("New message!!! - Clients - ");
+                            //data to put inside a variable (networkMessageId)
+                            var networkMessageId = _byteToNetworkCommand.DeserializeObject<string>(msg.Data);
+                            var connectionId = msg.Id.ToString();
+
+                            foreach (var variable in _hooks)
+                            {
+
+                                echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(nameof(networkMessageId), variable.messagefunction);
+                                //add start variables (see mod.echse)
+                                echseInterpreter.Context.SharedContext.AddVariable(new(){
+                                    DataTypeSymbol = LexiconSymbol.TagDataType,
+                                    Name = nameof(networkMessageId),
+                                    Value = networkMessageId,
+                                    Scope = variable.messagefunction
+                                });
+                                echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(nameof(connectionId), variable.messagefunction);
+                                echseInterpreter.Context.SharedContext.AddVariable(new(){
+                                    DataTypeSymbol = LexiconSymbol.TagDataType,
+                                    Name = nameof(connectionId),
+                                    Value = variable.connectionId,
+                                    Scope = variable.messagefunction
+                                });
+                                echseInterpreter.Context.Run(variable.messagefunction);
                             }
                         });
                 }
+
+                // foreach (var co in clientOutputs)
+                //     co.Broadcast("lol".ToNetworkCommand(0, _byteToNetworkCommand), MessageDeliveryMethod.Reliable);
             }
             System.Console.WriteLine("Exit");
         }
