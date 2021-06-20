@@ -3,7 +3,10 @@
     Set Tag ClientId = 'ClientId'
     Set Tag ClientExplanation = 'ClientExplanation'
     @Connect '127.0.01' '8081' 'echo' ClientId ClientExplanation@
-    @PipeMessageTo 'NewMessage' 'ClientId'@
+    @Print 'Connection attempt to 127.0.0.1@
+    @Print ClientId ClientExplanation@
+    @Bind 'NewMessage' 'ClientId' 'NewMessage'@
+    @Bind 'OnConnect' 'ClientId' 'OnConnect'@
 
 :NewMessage ( networkMessageId , connectionId )
     Set Tag messageContent = 'messageContent'

@@ -3,17 +3,13 @@
     Set Tag ServerResultOrId = 'ServerResultOrId'
     Set Tag ServerExplanation = 'ServerExplanation'
     @Serve '127.0.0.1' '8081' 'echo' ServerResultOrId ServerExplanation@
-    @PipeMessageTo 'NewMessage' 'ServerResultOrId'@
+    @Bind 'NewMessage' 'ServerResultOrId' 'NewMessage'@
+    @Bind 'OnConnect' 'ServerResultOrId' 'OnConnect'@
     @Print 'Server started successfully. Listening on ' '127.0.0.1:8081'@
     
-    Set Tag logger = 'logger'
-    Set Tag loggerExp = 'loggerExp'
-    @Serve '0.0.0.0' '8082' 'echo2' logger loggerExp@ 
-    @Print 'Server started successfully. Listening on ' '0.0.0.0:8082'@
-
-    Set Tag hailMessage = 'N/A'
-    @ReadLine 'hailMessage'@
-    @SendMessage hailMessage ServerResultOrId@
+:OnConnect ( networkMessageId , connectionId )
+    @Print 'OnConnect' connectionId@
+    @SendMessage 'OnConnect' connectionId@
 
 :NewMessage ( networkMessageId , connectionId )
     Set Tag messageContent = 'messageContent'
