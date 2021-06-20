@@ -3,18 +3,21 @@
     Set Tag ClientId = 'ClientId'
     Set Tag ClientExplanation = 'ClientExplanation'
     @Connect '127.0.01' '8081' 'echo' ClientId ClientExplanation@
-    @Print 'Connection attempt to 127.0.0.1@
+    @Print 'Connection attempt to 127.0.0.1'@
     @Print ClientId ClientExplanation@
     @Bind 'NewMessage' 'ClientId' 'NewMessage'@
     @Bind 'OnConnect' 'ClientId' 'OnConnect'@
+
+:OnConnect ( networkMessageId , connectionId )
+    @Print 'OnConnect' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
+    @SendMessage 'this is a new message' connectionId@
 
 :NewMessage ( networkMessageId , connectionId )
     Set Tag messageContent = 'messageContent'
     @GetMessage networkMessageId messageContent@
     @Print 'CLIENT RECEIVED: ' messageContent@
     @Print 'WRITE SOMETHING AND SEND BACK'@
-    Set Tag messageToRead = 'messageToRead'
-    @ReadLine messageToRead@
+    Set Tag messageToRead = 'THIS IS A CLIENT :)'    
     @SendMessage messageToRead connectionId@
 
      

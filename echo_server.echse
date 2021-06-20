@@ -8,8 +8,8 @@
     @Print 'Server started successfully. Listening on ' '127.0.0.1:8081'@
     
 :OnConnect ( networkMessageId , connectionId )
-    @Print 'OnConnect' connectionId@
-    @SendMessage 'OnConnect' connectionId@
+    @Print 'OnConnect' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
+    @SendMessage 'this is a new message' connectionId@
 
 :NewMessage ( networkMessageId , connectionId )
     Set Tag messageContent = 'messageContent'

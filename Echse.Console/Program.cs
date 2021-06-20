@@ -392,30 +392,109 @@ namespace Echse.Console
                 //listen to all clients 
                 var clientInputs = _clients.Values.Select(c => c.ToInputBus(_byteToNetworkCommand));
                 var clientOutputs = _clients.Values.Select(c => c.ToOutputBus(_byteToNetworkCommand));
-                foreach(var clientConnectionKV in _clients)
+                
+                foreach (var connectionKv in _clients)
                 {
-                    if(connected[clientConnectionKV.Key] = connected.ContainsKey(clientConnectionKV.Key) ? 
-                    connected[clientConnectionKV.Key] &= clientConnectionKV.Value.Status == NetPeerStatus.Running :
-                    clientConnectionKV.Value.Status == NetPeerStatus.Running){
-                        var leHook = _hooks.FirstOrDefault(hook => hook.connectionId == clientConnectionKV.Key &&
-                                                                    hook.eventName == "OnConnect");
-                        
-                        echseInterpreter.Context.SharedContext.AddVariable(new(){
-                                    DataTypeSymbol = LexiconSymbol.TagDataType,
-                                    Name = "networkMessageId",
-                                    Value = null,
-                                    Scope = leHook.messagefunction
-                                });
-                                echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(
-                                    "connectionId", leHook.messagefunction);
-                                echseInterpreter.Context.SharedContext.AddVariable(new(){
-                                    DataTypeSymbol = LexiconSymbol.TagDataType,
-                                    Name = "connectionId",
-                                    Value = leHook.connectionId,
-                                    Scope = leHook.messagefunction
-                                });
+                    System.Console.WriteLine(connectionKv.Key);
+                    System.Console.WriteLine(Enum.GetName(typeof(NetPeerStatus), connectionKv.Value.Status));
+
+                    if (connected.ContainsKey(connectionKv.Key) &&
+                        connectionKv.Value.Status == NetPeerStatus.Running)
+                    {
+                        System.Console.WriteLine("Skip");
+                        continue;
                     }
+                    connected[connectionKv.Key] = connectionKv.Value.Status == NetPeerStatus.Running;
+                    if (connected[connectionKv.Key])
+                    {
+                        System.Console.WriteLine("onConnect registration");
+                        var leHook = _hooks.FirstOrDefault(hook => hook.connectionId == connectionKv.Key &&
+                                                                   hook.eventName == "OnConnect");
+                        
+                        
+                        echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(
+                            "networkMessageId", leHook.messagefunction);
+                        echseInterpreter.Context.SharedContext.AddVariable(new()
+                        {
+                            DataTypeSymbol = LexiconSymbol.TagDataType,
+                            Name = "networkMessageId",
+                            Value = "",
+                            Scope = leHook.messagefunction
+                        });
+
+                        echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(
+                            "connectionId", leHook.messagefunction);
+                        echseInterpreter.Context.SharedContext.AddVariable(new()
+                        {
+                            DataTypeSymbol = LexiconSymbol.TagDataType,
+                            Name = "connectionId",
+                            Value = leHook.connectionId,
+                            Scope = leHook.messagefunction
+                        });
+
+                        if (!string.IsNullOrWhiteSpace(leHook.messagefunction))
+                            echseInterpreter.Context.Run(leHook.messagefunction);
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"{connectionKv.Key} disconnected");
+                        connected.Remove(connectionKv.Key);
+                    }
+                    
+                    
                 }
+                
+
+                foreach (var connectionKv in _servers)
+                {
+                    System.Console.WriteLine(connectionKv.Key);
+                    System.Console.WriteLine(Enum.GetName(typeof(NetPeerStatus), connectionKv.Value.Status));
+
+                    if (connected.ContainsKey(connectionKv.Key) &&
+                        connectionKv.Value.Status == NetPeerStatus.Running)
+                    {
+                        continue;
+                    }
+                    connected[connectionKv.Key] = connectionKv.Value.Status == NetPeerStatus.Running;
+                    if (connected[connectionKv.Key])
+                    {
+                        System.Console.WriteLine("onConnect registration");
+                        var leHook = _hooks.FirstOrDefault(hook => hook.connectionId == connectionKv.Key &&
+                                                                   hook.eventName == "OnConnect");
+                        
+
+                        echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(
+                            "networkMessageId", leHook.messagefunction);
+                        echseInterpreter.Context.SharedContext.AddVariable(new()
+                        {
+                            DataTypeSymbol = LexiconSymbol.TagDataType,
+                            Name = "networkMessageId",
+                            Value = "",
+                            Scope = leHook.messagefunction
+                        });
+
+                        echseInterpreter.Context.SharedContext.RemoveTagByNameAndScope(
+                            "connectionId", leHook.messagefunction);
+                        echseInterpreter.Context.SharedContext.AddVariable(new()
+                        {
+                            DataTypeSymbol = LexiconSymbol.TagDataType,
+                            Name = "connectionId",
+                            Value = leHook.connectionId,
+                            Scope = leHook.messagefunction
+                        });
+
+                        if (!string.IsNullOrWhiteSpace(leHook.messagefunction))
+                            echseInterpreter.Context.Run(leHook.messagefunction);
+                    }
+                    else
+                    {
+                        System.Console.WriteLine($"{connectionKv.Key} disconnected");
+                        connected.Remove(connectionKv.Key);
+                    }
+                    
+                    
+                }
+
                 foreach (var client in clientInputs)
                 {
                     client
@@ -450,10 +529,9 @@ namespace Echse.Console
                             }
                         });
                 }
-
-                // foreach (var co in clientOutputs)
-                //     co.Broadcast("lol".ToNetworkCommand(0, _byteToNetworkCommand), MessageDeliveryMethod.Reliable);
             }
+            
+            
             System.Console.WriteLine("Exit");
         }
         private static void DisplayWelcomeMessage()
