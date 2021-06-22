@@ -9,14 +9,14 @@
     @Bind 'OnConnect' 'ClientId' 'OnConnect'@
 
 :OnConnect ( networkMessageId , connectionId )
-    @Print 'OnConnect' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
+    @Print 'OnConnect Client!' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
     @SendMessage 'this is a new message' connectionId@
 
 :NewMessage ( networkMessageId , connectionId )
     Set Tag messageContent = 'messageContent'
     @GetMessage networkMessageId messageContent@
     @Print 'CLIENT RECEIVED: ' messageContent@
-    @Print 'WRITE SOMETHING AND SEND BACK'@
+    @Print 'WRITING SOMETHING AND SENDING BACK...'@
     Set Tag messageToRead = 'THIS IS A CLIENT :)'    
     @SendMessage messageToRead connectionId@
 

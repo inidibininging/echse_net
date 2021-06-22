@@ -76,10 +76,6 @@ namespace Echse.Console
                                  (string connectionId, string explanation)>(
                 (settings) => {
                     var endpoint = new NetServer(new(settings.peer) {
-                        PingInterval = 80,
-                        AcceptIncomingConnections = true,
-                        AutoFlushSendQueue = true,
-                        LocalAddress = IPAddress.Parse(settings.serverIp),
                         Port = int.Parse(settings.port),
                     });
                     try
@@ -104,10 +100,6 @@ namespace Echse.Console
                                     (string result, string explanation)>((settings) => 
                     {
                         var endpoint = new NetServer(new(settings.peer) {
-                            PingInterval = 80,
-                            AcceptIncomingConnections = true,
-                            AutoFlushSendQueue = true,
-                            LocalAddress = IPAddress.Parse(settings.serverIp),
                             Port = int.Parse(settings.port),
                         });
                         try
@@ -386,8 +378,6 @@ namespace Echse.Console
                                 echseInterpreter.Context.Run(variable.messagefunction);
                             }});
                 }
-                // foreach (var co in serversOutput)
-                //     co.Broadcast("beep".ToNetworkCommand(0, _byteToNetworkCommand), MessageDeliveryMethod.Reliable);
                 
                 //listen to all clients 
                 var clientInputs = _clients.Values.Select(c => c.ToInputBus(_byteToNetworkCommand));
@@ -395,13 +385,12 @@ namespace Echse.Console
                 
                 foreach (var connectionKv in _clients)
                 {
-                    System.Console.WriteLine(connectionKv.Key);
-                    System.Console.WriteLine(Enum.GetName(typeof(NetPeerStatus), connectionKv.Value.Status));
+                    //System.Console.WriteLine(connectionKv.Key);
+                    //System.Console.WriteLine(Enum.GetName(typeof(NetPeerStatus), connectionKv.Value.Status));
 
                     if (connected.ContainsKey(connectionKv.Key) &&
                         connectionKv.Value.Status == NetPeerStatus.Running)
                     {
-                        System.Console.WriteLine("Skip");
                         continue;
                     }
                     connected[connectionKv.Key] = connectionKv.Value.Status == NetPeerStatus.Running;
@@ -447,8 +436,8 @@ namespace Echse.Console
 
                 foreach (var connectionKv in _servers)
                 {
-                    System.Console.WriteLine(connectionKv.Key);
-                    System.Console.WriteLine(Enum.GetName(typeof(NetPeerStatus), connectionKv.Value.Status));
+                    //System.Console.WriteLine(connectionKv.Key);
+                    //System.Console.WriteLine(Enum.GetName(typeof(NetPeerStatus), connectionKv.Value.Status));
 
                     if (connected.ContainsKey(connectionKv.Key) &&
                         connectionKv.Value.Status == NetPeerStatus.Running)
@@ -458,7 +447,7 @@ namespace Echse.Console
                     connected[connectionKv.Key] = connectionKv.Value.Status == NetPeerStatus.Running;
                     if (connected[connectionKv.Key])
                     {
-                        System.Console.WriteLine("onConnect registration");
+                        System.Console.WriteLine("OnConnect registration");
                         var leHook = _hooks.FirstOrDefault(hook => hook.connectionId == connectionKv.Key &&
                                                                    hook.eventName == "OnConnect");
                         

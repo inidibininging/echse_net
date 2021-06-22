@@ -8,7 +8,7 @@
     @Print 'Server started successfully. Listening on ' '127.0.0.1:8081'@
     
 :OnConnect ( networkMessageId , connectionId )
-    @Print 'OnConnect' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
+    @Print 'OnConnect Server!' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
     @SendMessage 'this is a new message' connectionId@
 
 :NewMessage ( networkMessageId , connectionId )
