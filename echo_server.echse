@@ -3,15 +3,34 @@
     Set Tag ServerResultOrId = 'ServerResultOrId'
     Set Tag ServerExplanation = 'ServerExplanation'
     @Serve '127.0.0.1' '8081' 'echo' ServerResultOrId ServerExplanation@
+    If ServerResultOrId Is 'Error'
+        @Print 'Woops' ServerResultOrId ServerExplanation@
+        Return ServerResultOrId
+    EndIf
     @Bind 'NewMessage' 'ServerResultOrId' 'NewMessage'@
     @Bind 'OnConnect' 'ServerResultOrId' 'OnConnect'@
     @Print 'Server started successfully. Listening on ' '127.0.0.1:8081'@
+    Return 'Ok'
     
+:ServerProxy ( args )
+    Set Ref proxy = &ServerNode
+    @Print 'Processed through server proxy'@
+    Set Tag initOk = !proxy ( args )
+    @Print 'returned' initOk@
+    If initOk Is 'Ok'
+        @Print 'Initialization worked'@
+    EndIf
+    If initOk Is 'Error'
+        @Print 'Initialization error'@
+    EndIf
+
 :OnConnect ( networkMessageId , connectionId )
     @Print 'OnConnect Server!' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
-    @SendMessage 'this is a new message' connectionId@
+    @SendMessage 'HELLO THIS IS SERVER 1' connectionId@
+
 
 :NewMessage ( networkMessageId , connectionId )
+    @Print 'NewMessage!!!'@
     Set Tag messageContent = 'messageContent'
     @GetMessage networkMessageId messageContent@
     @Print 'SERVER: ' messageContent@

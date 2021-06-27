@@ -17,8 +17,8 @@ namespace Echse.Net.Infrastructure.Lidgren
             {
                 AcceptIncomingConnections = true,
                 LocalAddress = IPAddress.Parse(nodeConfiguration.Host),
-                Port = nodeConfiguration.Port,
-                EnableUPnP = true,
+                Port = nodeConfiguration.Port
+                // EnableUPnP = true,
             });
             netServer.Start();
             return netServer;

@@ -7,7 +7,6 @@ using Echse.Language;
 using Echse.Net.Domain;
 using Echse.Net.Infrastructure;
 using Echse.Net.Infrastructure.Lidgren;
-using Echse.Net.Lidgren.Instructions;
 using Echse.Net.Serialization.MsgPack;
 using Echse.Net.Serialization.Yaml;
 
@@ -43,8 +42,7 @@ namespace Echse.Net.Lidgren
             {
                 SharedContext = new InMemoryDataBank("Main")
             };
-            languageContext.NewService.New(nameof(CanInit), new CanInit());
-            languageContext.NewService.New(nameof(NewId), new NewId());
+
             var echseInterpreter = new Interpreter("Main");
 
             var interns =
