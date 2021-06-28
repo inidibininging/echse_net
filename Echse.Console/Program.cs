@@ -193,7 +193,8 @@ namespace Echse.Console
 
             var GetMessage = new Func<string,string>((messageId) =>
             {
-                System.Console.WriteLine($"GetMessage {messageId}");
+                System.Console.WriteLine($"TODO: GetMessage {messageId}");
+                
                 return messageId;
             });
 
@@ -228,7 +229,41 @@ namespace Echse.Console
                     if (subject == "NewObject")
                         newObject(subject, arguments);
 
-                    if (subject.StartsWith("Tree"))
+                    if (subject == "Contains")
+                    {
+                        
+                        var containsVariable = echseInterpreter
+                                                        .Context
+                                                        .SharedContext
+                                                        .Variables
+                                                        .FirstOrDefault((v) => v.Scope == scope &&
+                                                                                v.Name == arguments.ElementAt(0) &&
+                                                                                v.DataTypeSymbol == LexiconSymbol.TagDataType);
+                        
+                        var containsBool = containsVariable.Value.Contains(arguments.ElementAt(1));
+                        
+
+                        var outputVariable = echseInterpreter
+                                                        .Context
+                                                        .SharedContext
+                                                        .Variables
+                                                        .FirstOrDefault((v) => v.Scope == scope &&
+                                                                                v.Name == arguments.ElementAt(2) &&
+                                                                                v.DataTypeSymbol == LexiconSymbol.TagDataType);
+                        if(outputVariable == null)
+                            throw new ArgumentException($"Variable {arguments.ElementAt(2)} not found");
+                        outputVariable.Value = containsBool ? "1" : "0";
+                    }
+
+                    // if(subject == "Set")
+                    // {
+
+                    // }
+                    // if(subject == "Get")
+                    // {
+
+                    // }
+                    if (subject.StartsWith("LLSet"))
                     {
                         using var argEnumerator = arguments.GetEnumerator();
                         argEnumerator.MoveNext();
@@ -236,12 +271,38 @@ namespace Echse.Console
                         // interns[root].Clear();
                         LinkedListNode<string> currentNode;
                         LinkedListNode<string> lastNode = new(root);
+                        interns[root].AddFirst(lastNode);
                         while (argEnumerator.MoveNext())
                         {
                             currentNode = new LinkedListNode<string>(argEnumerator.Current);
                             interns[root].AddAfter(lastNode, currentNode);
                             lastNode = currentNode;
                         }
+                    }
+
+                    if (subject.StartsWith("LLGet"))
+                    {
+                        using var argEnumerator = arguments.GetEnumerator();
+                        argEnumerator.MoveNext();
+                        if(arguments.Count() < 3)
+                            throw new ArgumentException("Too few arguments for LinkedListGet");
+                        var root = argEnumerator.Current;
+                        var depth = arguments.Skip(1).SkipLast(1).Count();
+
+                        var rootTree = interns[root];
+                        using var treeEnumerator = rootTree.GetEnumerator();
+                        
+                        var outputVariable = echseInterpreter
+                                                        .Context
+                                                        .SharedContext
+                                                        .Variables
+                                                        .FirstOrDefault((v) => v.Scope == scope &&
+                                                                                v.Name == arguments.Last() &&
+                                                                                v.DataTypeSymbol == LexiconSymbol.TagDataType);
+                        if(rootTree.Count() > depth + 1)
+                            outputVariable.Value = rootTree.ElementAt(depth + 1);
+                        else
+                            outputVariable.Value = "";
                     }
 
                     if (subject == nameof(UseGuard))
@@ -288,7 +349,8 @@ namespace Echse.Console
                                                         .SharedContext
                                                         .Variables
                                                         .FirstOrDefault((v) => v.Scope == scope &&
-                                                                                v.Name == arguments.ElementAt(1));
+                                                                                v.Name == arguments.ElementAt(1) &&
+                                                                                v.DataTypeSymbol == LexiconSymbol.TagDataType);
                         messageContentVariable.Value = messageContent;
                     }
                     if (subject == nameof(Serve))
@@ -309,7 +371,8 @@ namespace Echse.Console
                                             .SharedContext
                                             .Variables
                                             .FirstOrDefault((v) => v.Scope == scope &&
-                                                                    v.Name == arguments.ElementAt(4));
+                                                                    v.Name == arguments.ElementAt(4) &&
+                                                                    v.DataTypeSymbol == LexiconSymbol.TagDataType);
                         connectionId.Value = serve.connectionId;
 
                         if(connectionId.Value == "Error")
@@ -330,14 +393,16 @@ namespace Echse.Console
                                 .SharedContext
                                 .Variables
                                 .FirstOrDefault((v) => v.Scope == scope &&
-                                                        v.Name == arguments.ElementAt(3));
+                                                        v.Name == arguments.ElementAt(3) &&
+                                                        v.DataTypeSymbol == LexiconSymbol.TagDataType);
                         connectionId.Value = connection.result;
                         var explanation = echseInterpreter
                                             .Context
                                             .SharedContext
                                             .Variables
                                             .FirstOrDefault((v) => v.Scope == scope &&
-                                                                    v.Name == arguments.ElementAt(4));
+                                                                    v.Name == arguments.ElementAt(4) &&
+                                                                    v.DataTypeSymbol == LexiconSymbol.TagDataType);
                         explanation.Value = connection.explanation;
                     }
                     if (subject == nameof(Bind))

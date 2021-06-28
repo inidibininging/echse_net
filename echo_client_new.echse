@@ -1,0 +1,39 @@
+
+:ClientNode ( args )
+    Set Tag ClientId = 'ClientId'
+    Set Tag ClientExplanation = 'ClientExplanation'
+    @Connect '127.0.01' '8081' 'echo' ClientId ClientExplanation@
+    @Print 'Connection attempt to 127.0.0.1'@
+    @Print ClientId ClientExplanation@
+    If ClientId Is 'Error'
+        @Print 'Error:' ClientId ClientExplanation@
+        Return ClientId
+    EndIf
+    @Bind 'NewMessage' 'ClientId' 'NewMessage'@
+    @Bind 'OnConnect' 'ClientId' 'OnConnect'@
+
+:OnConnect ( networkMessageId , connectionId )
+    @Print 'OnConnect Client!' 'networkMessageId' networkMessageId 'connectionId' connectionId 'from OnConnect :)'@
+    @SendMessage 'index' connectionId@
+
+:NewMessage ( networkMessageId , connectionId )
+    Set Tag messageContent = 'messageContent'
+    @GetMessage networkMessageId messageContent@
+    Set Tag messageBack = 'messageBack'
+
+    @SendMessage '1' connectionId@ 
+    If messageContent Is 'login_ack'
+      @Print messageContent@
+      @ReadLine messageBack@
+      @Print messageBack 'will be sent to server'@
+      @SendMessage messageBack connectionId@
+    EndIf
+
+    If messageContent Is 'register_ack'
+      @Print messageContent@
+      @ReadLine 'messageBack'@
+      @Print messageBack 'will be sent to server'@
+      @SendMessage messageBack connectionId@
+    EndIf
+
+

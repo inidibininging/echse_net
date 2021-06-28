@@ -1,0 +1,8 @@
+
+:a ( arg )
+Set Tag b = 'lol' 
+@NewObject b@ 
+@LLSet b 'b' 'y'@
+@LLGet b 'b' 'b'@
+
+

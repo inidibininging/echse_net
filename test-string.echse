@@ -1,0 +1,17 @@
+
+:a ( a )
+Set Tag someString = 'fuzzylucy'
+Set Tag tf = 'X'
+
+@Contains 'someString' 'lucy' 'tf'@
+If tf Is '0'
+  @Print someString 'does not contain lucy'@
+EndIf
+
+If tf Is '1'
+  @Print someString 'does contain lucy'@
+EndIf
+
+Set Tag false = '0'
+Set Tag true = '1'
+
