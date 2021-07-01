@@ -55,7 +55,6 @@ namespace Echse.Net.Lidgren
 
 
             echseInterpreter.AddCreateInstruction<string>(symbol => symbol == LexiconSymbol.Create,
-                (creation) => creation == "NewObject" || creation.StartsWith("Assign"),
                 (scope, subject, arguments) =>
                 {
                     //create a new object

@@ -29,6 +29,12 @@ namespace Echse.Net.Infrastructure.Lidgren
             new(net, new NetIncomingMessageNetworkCommandConnectionTranslator(
                 new NetworkCommandTranslator(byteArraySerializationAdapter)));
 
+        public static RawNetIncomingMessageBusService<TNetPeer> ToInputBus<TNetPeer>(this TNetPeer net) 
+        where TNetPeer : NetPeer => new(net);
+
+        public static RawNetOutgoingMessageBusService<TNetPeer> ToOutputBus<TNetPeer>(this TNetPeer net) 
+        where TNetPeer : NetPeer => new(net);
+
         public static NetOutgoingMessageBusService<NetPeer> ToOutputBus(this NetPeer net,
             IByteArraySerializationAdapter byteArraySerializationAdapter) =>
             new (net, byteArraySerializationAdapter);
