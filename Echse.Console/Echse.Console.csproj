@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\echse\Echse.Domain\Echse.Domain.csproj" />
+    <ProjectReference Include="..\echse\Echse.Language\Echse.Language.csproj" />
+    <ProjectReference Include="..\Echse.Net.Infrastructure\Echse.Net.Infrastructure.csproj" />
+    <ProjectReference Include="..\Echse.Net.Serialization\Echse.Net.Serialization.csproj" />
+    <ProjectReference Include="..\Echse.Net.Serialization.MsgPack\Echse.Net.Serialization.MsgPack.csproj" />
+    <ProjectReference Include="..\Echse.Net.Infrastructure.Lidgren\Echse.Net.Infrastructure.Lidgren.csproj" />
+    <ProjectReference Include="..\Echse.Net.Domain.Lidgren\Echse.Net.Domain.Lidgren.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Lidgren.Network.Core2" Version="1.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+</Project>

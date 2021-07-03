@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Echse.Domain;
 using Echse.Language;
 using Echse.Net.Domain;
@@ -10,7 +9,6 @@ using Echse.Net.Infrastructure;
 using Echse.Net.Infrastructure.Lidgren;
 using Echse.Net.Serialization.MsgPack;
 using Echse.Net.Serialization.Yaml;
-using Lidgren.Network;
 
 namespace Echse.Net.Lidgren
 {
@@ -25,76 +23,86 @@ namespace Echse.Net.Lidgren
             var server = serverConfig.CreateAndStartServer();
             var byteToNetworkCommand = new MsgPackByteArraySerializerAdapter();
             var toAnythingConverter = new NetworkCommandDataConverterService(byteToNetworkCommand);
-            
-            
 
             //server
             var serverInput = server.ToInputBus(byteToNetworkCommand);
             var serverOutput = server.ToOutputBus(byteToNetworkCommand);
-            
+
             var internalQueues = new Dictionary<Topics, NetworkCommandMessageQueue>()
             {
-                {Topics.Inbox,  new NetworkCommandMessageQueue((connection => connection.CommandName == (byte) Topics.Inbox)) },
-                {Topics.Out,  new NetworkCommandMessageQueue((connection => connection.CommandName == (byte) Topics.Out)) },
+                {Topics.Inbox,  new NetworkCommandMessageQueue(connection => connection.CommandName == (byte) Topics.Inbox) },
+                {Topics.Out,  new NetworkCommandMessageQueue(connection => connection.CommandName == (byte) Topics.Out) },
             };
-            
-            //langauge stuff
+
+            /* language stuff
+                - add own instructions                
+             */
             var api = new InMemoryDataBankApi();
-            var languageContext = new InMemoryDataBankMachine(api);
-            languageContext.SharedContext = new InMemoryDataBank("Main");
+            var languageContext = new InMemoryDataBankMachine(api)
+            {
+                SharedContext = new InMemoryDataBank("Main")
+            };
+
             var echseInterpreter = new Interpreter("Main");
 
-            
+            var interns =
+                new Dictionary<string, LinkedList<string>>();
+            var newObject = new Action<string, IEnumerable<string>>((subject, arguments) =>
+            {
+                foreach (var argument in arguments)
+                    interns[argument] = new LinkedList<string>();
+            });
+
+
             echseInterpreter.AddCreateInstruction<string>(symbol => symbol == LexiconSymbol.Create,
-                (creation) => true,
-                (subject, argument) =>
+                (scope, subject, arguments) =>
                 {
-                    Console.WriteLine($"created {subject} {argument}");
+                    //create a new object
+                    if (subject == "NewObject")
+                        newObject(subject, arguments);
+
+                    if (subject.StartsWith("Tree"))
+                    {
+                        using var argEnumerator = arguments.GetEnumerator();
+                        argEnumerator.MoveNext();
+                        var root = argEnumerator.Current;
+                        interns[root].Clear();
+                        LinkedListNode<string> currentNode;
+                        LinkedListNode<string> lastNode = new(root);
+                        while (argEnumerator.MoveNext())
+                        {
+                            currentNode = new LinkedListNode<string>(argEnumerator.Current);
+                            interns[root].AddAfter(lastNode, currentNode);
+                            lastNode = currentNode;
+                        }
+                    }
+                    // if(subject.StartsWith("Assign"))
+                    //     interns[string.Join(null,subject.Skip("Assign".Length)) ?? string.Empty][argument] = "";
                 });
-            
-            var someRandomStrings = new List<string>() { "random string", "random string 2" };
-            
-            // echseInterpreter.AddModifyInstruction<string>(symbol => symbol == LexiconSymbol.Modify,
-            //     (tag) =>
-            //     {
-            //         Console.WriteLine($"getting entities by tag {tag}");
-            //         return someRandomStrings;
-            //     },
-            //     expression =>
-            //     {
-            //         Console.WriteLine($"Checking entities {expression.Name} ...");
-            //         return expression.Name == "herbert" ? someRandomStrings : someRandomStrings;
-            //     },
-            //     (entity, mod) =>
-            //     {
-            //         Console.WriteLine($"entity {entity} will be modded with {mod.Identifier?.Name} {mod.Property?.Name} {mod.Attribute?.Name} {mod.SignConverter?.Name} {mod.Number?.Name} {mod.Number?.NumberValue}");
-            //     });
-            
-            
+
+
             echseInterpreter.Context = languageContext;
-            
-            
+
             //subscribers
             var consumeInboxAsCode = new LanguageInboxConsumer(toAnythingConverter, echseInterpreter);
             var tagVariableSync = new TagSyncConsumer(toAnythingConverter, languageContext);
             var producerOut = new LanguageOutQueue();
-            
+
             //subscription
             internalQueues[Topics.Inbox].Subscribe(consumeInboxAsCode);
             internalQueues[Topics.Inbox].Subscribe(tagVariableSync);
             internalQueues[Topics.Out].Subscribe(producerOut);
-            
-            //message handling
+
+
+            //message handling ( the network IO must be in the main thread ) 
             while (true)
             {
-                //load stuff from queues and pass on to handlers
-                foreach (var networkCommandConnection in serverInput.FetchMessageChunk())
+                var messages = serverInput.FetchMessageChunk().ToList();
+                foreach (var q in internalQueues)
                 {
-                    Console.WriteLine($"server received message");
-                    foreach (var q in internalQueues)
-                        q.Value.OnNext(networkCommandConnection);
+                    Task.Factory.StartNew(() => messages.ForEach(msg => q.Value.OnNext(msg)));
                 }
-                
+
                 //load stuff from output queue and send to clients
                 foreach (var networkCommandConnection in producerOut.FetchMessageChunk())
                 {
@@ -102,18 +110,11 @@ namespace Echse.Net.Lidgren
                         MessageDeliveryMethod.Reliable);
                     Console.WriteLine($"server sent message to {networkCommandConnection.Id}");
                 }
-                
-                // foreach (var networkCommandConnection in clientInput.FetchMessageChunk())
-                // {
-                //     clientOutput.SendTo("ok".ToNetworkCommand(1, byteToNetworkCommand),
-                //         networkCommandConnection.Id, MessageDeliveryMethod.Reliable);
-                //     Console.WriteLine($"client received {toAnythingConverter.ConvertToObject(networkCommandConnection)}");
-                // }
             }
-            
+
         }
-        
-        
+
+
 
         private static void DisplayWelcomeMessage()
         {
@@ -133,23 +134,23 @@ namespace Echse.Net.Lidgren
 
         private static void WriteExampleServerConfig() => System.IO.File.WriteAllText("example_server.yaml",
             new YamlSerializerAdapter().SerializeObject(ExampleServerConfig()));
-        
 
-        
-        private static  NodeConfiguration<byte> ExampleServerConfig() => new()
+
+
+        private static NodeConfiguration<byte> ExampleServerConfig() => new()
         {
             PeerName = "echse_net",
             Host = "127.0.0.1",
             Port = 8082,
             Topics = new()
             {
-                (byte)Topics.Inbox, 
-                (byte)Topics.Out, 
+                (byte)Topics.Inbox,
+                (byte)Topics.Out,
                 (byte)Topics.DeadLadder,
             },
             Subscriptions = new List<NodeConfiguration<byte>>()
-        }; 
-        
+        };
+
 
     }
 }

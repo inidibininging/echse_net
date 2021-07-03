@@ -17,8 +17,8 @@ namespace Echse.Net.Infrastructure.Lidgren
             {
                 AcceptIncomingConnections = true,
                 LocalAddress = IPAddress.Parse(nodeConfiguration.Host),
-                Port = nodeConfiguration.Port,
-                EnableUPnP = true,
+                Port = nodeConfiguration.Port
+                // EnableUPnP = true,
             });
             netServer.Start();
             return netServer;
@@ -28,6 +28,12 @@ namespace Echse.Net.Infrastructure.Lidgren
             IByteArraySerializationAdapter byteArraySerializationAdapter) =>
             new(net, new NetIncomingMessageNetworkCommandConnectionTranslator(
                 new NetworkCommandTranslator(byteArraySerializationAdapter)));
+
+        public static RawNetIncomingMessageBusService<TNetPeer> ToInputBus<TNetPeer>(this TNetPeer net) 
+        where TNetPeer : NetPeer => new(net);
+
+        public static RawNetOutgoingMessageBusService<TNetPeer> ToOutputBus<TNetPeer>(this TNetPeer net) 
+        where TNetPeer : NetPeer => new(net);
 
         public static NetOutgoingMessageBusService<NetPeer> ToOutputBus(this NetPeer net,
             IByteArraySerializationAdapter byteArraySerializationAdapter) =>

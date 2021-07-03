@@ -5,7 +5,8 @@ using Echse.Net.Infrastructure;
 
 namespace Echse.Net.Lidgren
 {
-    public class LanguageInboxConsumer : IObserver<NetworkCommandConnection<long>>, IDisposable
+    public class LanguageInboxConsumer : 
+        IObserver<NetworkCommandConnection<long>>, IDisposable
     {
         private NetworkCommandDataConverterService _dataConverterService;
         private readonly Interpreter _echseInterpreter;
@@ -38,9 +39,10 @@ namespace Echse.Net.Lidgren
             var sourceCode = _dataConverterService.ConvertToObject(value);
             if (value.CommandArgument == typeof(string).FullName && sourceCode is string code)
             {
-                Console.WriteLine(code);
+                //Console.WriteLine(code);
+                //_echseInterpreter.Instructions.Clear();
                 _echseInterpreter.Run(code);
-                _echseInterpreter.Context.Run(_echseInterpreter.RunOperation);
+                _echseInterpreter.Context.Run("Main");
             }
         }
 

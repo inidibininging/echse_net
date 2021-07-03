@@ -1,0 +1,34 @@
+
+:NewMessage ( networkMessageId , connectionId )
+    Set Tag guard = 'NewMessageGuard'
+    Set Tag guardMessage = 'guardMessage'
+    Set Tag guardExplanation = 'guardExplanation'
+    Set Tag messageContent = 'messageContent'
+
+    @Print 'HELLO THIS IS A' ' CONCATENATED STRING! :)'@
+    @UseGuard guard networkMessageId connectionId guardMessage guardExplanation@
+    @GetMessage networkMessageId messageContent@
+
+    If guardMessage Is 'Ok'
+        @Print 'Guard message is ok'@
+        !Echo( connectionId )
+    EndIf
+
+   If guardMessage Is 'Error'
+      !PrintError( networkMessageId , connectionId ,  guardMessage , guardExplanation )
+   EndIf
+
+:PrintError ( networkMessageId , connectionId , guardMessage , guardExplanation )
+   @Print 'Error:' guardMessage 'Explanation:' guardExplanation@
+
+:Echo ( connectionId )
+   Set Tag messageToSend = 'Echo'
+   @SendMessage messageToSend connectionId@
+
+:Login ( networkMessageId , connectionId )
+   Set Tag guard = 'LoginGuard'
+   Set Tag guardMessage = 'guardMessage'
+   Set Tag guardExplanation = 'guardExplanation'
+
+   @UseGuard guard networkMessageId connectionId guardMessage guardExplanation@
+   @SendMessage guardMessage connectionId@

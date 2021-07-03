@@ -4,7 +4,7 @@ using System.Linq;
 using Echse.Domain;
 using Echse.Language;
 
-namespace Echse.Net.Lidgren
+namespace Echse.Console
 {
     public class InMemoryDataBank : IEchseContext
     {
@@ -36,19 +36,22 @@ namespace Echse.Net.Lidgren
 
         public void RemoveTagByName(string tagName)
         {
-            var variablesFound = _variables.Where(v => v.Name == tagName &&
-                                                        v.DataTypeSymbol == LexiconSymbol.TagDataType);
-            if(variablesFound.Any())
-                _variables = _variables.Except(variablesFound).ToList();
+            var foundVars = _variables.Where(t => 
+                                                 t.DataTypeSymbol == LexiconSymbol.TagDataType &&
+                                                 t.Name == tagName);
+            if (foundVars.Any())
+                _variables = _variables.Except(foundVars).ToList();
         }
-        
+
         public void RemoveTagByNameAndScope(string tagName, string scope)
         {
-            var variablesFound = _variables.Where(v => v.Scope == scope && 
-                                                                 v.Name == tagName &&
-                                                                 v.DataTypeSymbol == LexiconSymbol.TagDataType);
-            if(variablesFound.Any())
-                _variables = _variables.Except(variablesFound).ToList();
+            var foundVars = _variables.Where(t => 
+                t.DataTypeSymbol == LexiconSymbol.TagDataType &&
+                t.Name == tagName &&
+                t.Scope == scope);
+            if (foundVars.Any())
+                _variables = _variables.Except(foundVars).ToList();
         }
+        
     }
 }

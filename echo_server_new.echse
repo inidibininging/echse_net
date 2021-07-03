@@ -1,0 +1,59 @@
+
+:ServerNode ( args )
+    Set Tag ServerResultOrId = 'ServerResultOrId'
+    Set Tag ServerExplanation = 'ServerExplanation'
+    @Serve '127.0.0.1' '8081' 'echo' ServerResultOrId ServerExplanation@
+    If ServerResultOrId Is 'Error'
+        @Print 'Woops' ServerResultOrId ServerExplanation@
+        Return ServerResultOrId
+    EndIf
+    @Bind 'NewMessage' 'ServerResultOrId' 'NewMessage'@
+    @Bind 'OnConnect' 'ServerResultOrId' 'OnConnect'@
+    @Print 'Server started successfully. Listening on ' '127.0.0.1:8081'@
+    Return 'Ok'
+    
+:ServerProxy ( args )
+    Set Ref proxy = &ServerNode
+    @Print 'Processed through server proxy'@
+    Set Tag initOk = !proxy ( args )
+    @Print 'returned' initOk@
+    If initOk Is 'Ok'
+        @Print 'Initialization worked'@
+    EndIf
+    If initOk Is 'Error'
+        @Print 'Initialization error'@
+    EndIf
+
+:OnConnect ( networkMessageId , connectionId )
+    @Print 'OnConnect Server:' 'networkMessageId' networkMessageId 'connectionId' connectionId@
+
+:NewMessage ( networkMessageId , connectionId )
+    Set Tag messageContent = 'messageContent'
+    @GetMessage networkMessageId messageContent@
+    @Print 'SERVER: ' messageContent@
+    If messageContent Is 'index'
+      !IndexController ( networkMessageId , connectionId )
+    EndIf
+    If messageContent Is '1'
+      !RegistrationController ( networkMessageId , connectionId )
+    EndIf
+    If messageContent Is '2'
+      !LoginController ( networkMessageId , connectionId )
+    EndIf
+ 
+
+:IndexController ( networkMessageId , connectionId )
+    @SendMessage 'Hello there. Type 1 for registration or 2 for login' connectionId@
+
+:LoginController ( networkMessageId , connectionId )
+    @SendMessage 'login_ack' connectionId@
+    @NewObject connectionId@
+    @Tree connectionId networkMessageId@
+    @Print networkMessageId connectionId@
+
+:RegistrationController ( networkMessageId , connectionId )
+    @SendMessage 'register_ack' connectionId@
+    @NewObject connectionId@
+    @Tree connectionId networkMessageId@
+    @Print networkMessageId connectionId 'saved'@
+

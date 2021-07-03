@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Echse.Net.Domain;
 using Lidgren.Network;
@@ -26,6 +27,8 @@ namespace Echse.Net.Infrastructure.Lidgren
         public IEnumerable<NetworkCommandConnection<long>> FetchMessageChunk()
         {
             var messages = InternalFetchMessageChunk();
+            if (!messages.Any())
+                return Array.Empty<NetworkCommandConnection<long>>();
             return messages 
                 .Where(msg => msg.MessageType == NetIncomingMessageType.Data)
                 .Select(msg => NetIncomingMessageNetworkCommandConnectionTranslator.Translate(msg));
@@ -45,6 +48,12 @@ namespace Echse.Net.Infrastructure.Lidgren
         {
             var fetchedMessages = new List<NetIncomingMessage>();
             var fetchMessageResult = Peer.ReadMessages(fetchedMessages);
+            fetchedMessages.ForEach(msg =>
+            {
+                Console.WriteLine(ASCIIEncoding.ASCII.GetString(msg.Data));
+                Console.WriteLine(msg.MessageType == NetIncomingMessageType.Data);
+            });
+            
             return fetchedMessages;
         }
         

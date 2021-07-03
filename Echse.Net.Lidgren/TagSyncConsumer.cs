@@ -33,8 +33,7 @@ namespace Echse.Net.Lidgren
         {
             if (Disposed)
                 return;
-            
-            
+
             var tagVariableUntyped = _dataConverterService.ConvertToObject(value);
             if (value.CommandArgument == typeof(TagVariable).FullName && tagVariableUntyped is TagVariable tagVariable)
             {
