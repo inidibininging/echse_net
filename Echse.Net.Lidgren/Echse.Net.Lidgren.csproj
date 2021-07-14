@@ -14,7 +14,9 @@
       <ProjectReference Include="..\Echse.Net.Infrastructure.Lidgren\Echse.Net.Infrastructure.Lidgren.csproj" />
       <ProjectReference Include="..\Echse.Net.Serialization.MsgPack\Echse.Net.Serialization.MsgPack.csproj" />
       <ProjectReference Include="..\Echse.Net.Serialization.Yaml\Echse.Net.Serialization.Yaml.csproj" />
+      <ProjectReference Include="..\echse\Echse.Domain\Echse.Domain.csproj" />
       <ProjectReference Include="..\echse\Echse.Language\Echse.Language.csproj" />
+      <ProjectReference Include="..\echse\states\States.Core\States.Core.csproj" />
     </ItemGroup>
 
 </Project>

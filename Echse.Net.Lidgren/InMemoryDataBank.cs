@@ -50,5 +50,6 @@ namespace Echse.Net.Lidgren
             if(variablesFound.Any())
                 _variables = _variables.Except(variablesFound).ToList();
         }
+        
     }
 }

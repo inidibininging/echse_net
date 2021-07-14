@@ -42,6 +42,7 @@ namespace Echse.Net.Lidgren
                 //Console.WriteLine(code);
                 //_echseInterpreter.Instructions.Clear();
                 _echseInterpreter.Run(code);
+                
                 _echseInterpreter.Context.Run("Main");
             }
         }

@@ -2,12 +2,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\echse\Echse.Domain\Echse.Domain.csproj" />
-    <ProjectReference Include="..\echse\Echse.Language\Echse.Language.csproj" />
     <ProjectReference Include="..\Echse.Net.Infrastructure\Echse.Net.Infrastructure.csproj" />
     <ProjectReference Include="..\Echse.Net.Serialization\Echse.Net.Serialization.csproj" />
     <ProjectReference Include="..\Echse.Net.Serialization.MsgPack\Echse.Net.Serialization.MsgPack.csproj" />
     <ProjectReference Include="..\Echse.Net.Infrastructure.Lidgren\Echse.Net.Infrastructure.Lidgren.csproj" />
     <ProjectReference Include="..\Echse.Net.Domain.Lidgren\Echse.Net.Domain.Lidgren.csproj" />
+    <ProjectReference Include="..\echse\Echse.Language\Echse.Language.csproj" />
   </ItemGroup>
 
   <ItemGroup>

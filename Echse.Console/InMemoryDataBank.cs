@@ -52,6 +52,10 @@ namespace Echse.Console
             if (foundVars.Any())
                 _variables = _variables.Except(foundVars).ToList();
         }
-        
+
+        public void Run(string key)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

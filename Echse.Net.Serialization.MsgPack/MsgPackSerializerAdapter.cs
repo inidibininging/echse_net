@@ -1,4 +1,5 @@
-﻿using MsgPack;
+﻿using Echse.Net.Serialization;
+using MsgPack;
 using MsgPack.Serialization;
 using System;
 using System.IO;
