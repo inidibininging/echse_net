@@ -11,13 +11,15 @@ namespace Echse.Console
         IStateNewService<string, IEchseContext>
     {
         private Dictionary<string, IState<string, IEchseContext>> _banks = new();
-        
+
+        public IEnumerable<string> States => _banks.Keys;
+
         public IState<string, IEchseContext> Get(string identifier) => _banks[identifier];
 
 
         public bool HasState(string identifier) => _banks.ContainsKey(identifier);
 
-        public bool Set(IState<string, IEchseContext> state, string identifier)
+        public bool Set(string identifier, IState<string, IEchseContext> state)
         {
             if (state == null || string.IsNullOrWhiteSpace(identifier))
                 return false;

@@ -14,7 +14,6 @@ namespace Echse.Console
 {
     public class Econ
     {
-
         private string SourceCode { get; }
         private string EntryFunction { get; }
         public string NewMessageFunction { get; }
